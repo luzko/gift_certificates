@@ -1,0 +1,5 @@
+dependencies {
+    implementation "mysql:mysql-connector-java:${mysqlVersion}"
+    implementation "com.zaxxer:HikariCP:${hikariVersion}"
+    testImplementation "com.h2database:h2:${h2Version}"
+}
