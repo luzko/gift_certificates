@@ -1,5 +1,11 @@
 dependencies {
-    implementation "mysql:mysql-connector-java:${mysqlVersion}"
-    implementation "com.zaxxer:HikariCP:${hikariVersion}"
-    testImplementation "com.h2database:h2:${h2Version}"
+    runtimeOnly "mysql:mysql-connector-java:${mysql}"
+}
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
 }

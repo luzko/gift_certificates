@@ -1,7 +1,6 @@
 package com.epam.esm.service.impl;
 
 import com.epam.esm.dao.GiftCertificateDAO;
-import com.epam.esm.dao.GiftCertificateTagDAO;
 import com.epam.esm.dao.TagDAO;
 import com.epam.esm.dto.GiftCertificateDTO;
 import com.epam.esm.dto.GiftCertificatePatchDTO;
@@ -12,10 +11,10 @@ import com.epam.esm.mapper.TagMapper;
 import com.epam.esm.mapper.impl.GiftCertificateMapperImpl;
 import com.epam.esm.mapper.impl.TagMapperImpl;
 import com.epam.esm.model.GiftCertificate;
-import com.epam.esm.model.GiftCertificateTag;
-import com.epam.esm.model.SqlRequest;
 import com.epam.esm.model.Tag;
-import com.epam.esm.utils.SqlRequestGenerator;
+import com.epam.esm.utils.PaginationUtil;
+import com.epam.esm.utils.generator.CertificateQueryGenerator;
+import com.epam.esm.utils.generator.TagQueryGenerator;
 import com.epam.esm.validation.AppValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +24,6 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
-import org.springframework.util.LinkedCaseInsensitiveMap;
 
 import javax.validation.Validation;
 import java.math.BigDecimal;
@@ -36,8 +34,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 
 import static java.time.ZonedDateTime.of;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -47,19 +46,21 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ExtendWith(MockitoExtension.class)
 class GiftCertificateServiceImplTest {
     @Spy
-    private final SqlRequestGenerator sqlRequestGenerator = new SqlRequestGenerator();
+    private final CertificateQueryGenerator certificateQueryGenerator = new CertificateQueryGenerator();
+    @Spy
+    private final TagQueryGenerator tagQueryGenerator = new TagQueryGenerator();
     @Spy
     private final GiftCertificateMapper giftCertificateMapper = new GiftCertificateMapperImpl(new ModelMapper());
     @Spy
     private final TagMapper tagMapper = new TagMapperImpl(new ModelMapper());
     @Spy
     private final AppValidator validator = new AppValidator(Validation.buildDefaultValidatorFactory().getValidator());
+    @Spy
+    private final PaginationUtil paginationUtil = new PaginationUtil();
     @InjectMocks
     private GiftCertificateServiceImpl giftCertificateService;
     @Mock
     private GiftCertificateDAO giftCertificateDAO;
-    @Mock
-    private GiftCertificateTagDAO giftCertificateTagDAO;
     @Mock
     private TagDAO tagDAO;
 
@@ -67,8 +68,10 @@ class GiftCertificateServiceImplTest {
     void addPositiveTest() {
         TagDTO inputTag = new TagDTO("#newtag");
         Tag tag = new Tag(1L, "#newtag");
-        TagDTO expectedTag = new TagDTO(1L, "#newtag");
-        List<TagDTO> inputTags = Collections.singletonList(inputTag);
+        Set<Tag> expectedTagSet = new HashSet<>();
+        expectedTagSet.add(tag);
+        Set<TagDTO> inputTags = new HashSet<>();
+        inputTags.add(inputTag);
         GiftCertificateDTO inputCertificate = new GiftCertificateDTO(
                 "newCertificate", "newDescription", BigDecimal.valueOf(5), 10, inputTags
         );
@@ -76,15 +79,11 @@ class GiftCertificateServiceImplTest {
                 1L, "newCertificate", "newDescription", BigDecimal.valueOf(5),
                 of(LocalDateTime.of(2020, Month.JANUARY, 10, 21, 0), ZoneId.systemDefault()),
                 of(LocalDateTime.of(2020, Month.JANUARY, 14, 22, 4), ZoneId.systemDefault()),
-                10
+                10, false, expectedTagSet
         );
-        GiftCertificateDTO expectedCertificate = giftCertificateMapper.toDto(certificate,
-                Collections.singletonList(expectedTag));
-        GiftCertificateTag giftCertificateTag = new GiftCertificateTag(1L, 1L);
+        GiftCertificateDTO expectedCertificate = giftCertificateMapper.toDto(certificate);
         Mockito.when(giftCertificateDAO.add(Mockito.any(GiftCertificate.class))).thenReturn(certificate);
-        Mockito.when(tagDAO.findByName(Mockito.any(SqlRequest.class))).thenReturn(Collections.singletonList(tag));
-        Mockito.doNothing().when(giftCertificateTagDAO).add(Collections.singletonList(giftCertificateTag));
-        Mockito.when(tagDAO.findByCertificateId(1L)).thenReturn(Collections.singletonList(tag));
+        Mockito.when(tagDAO.findByName(Mockito.anyString())).thenReturn(Collections.singletonList(tag));
         GiftCertificateDTO actualCertificate = giftCertificateService.add(inputCertificate);
         assertEquals(expectedCertificate, actualCertificate);
     }
@@ -93,26 +92,25 @@ class GiftCertificateServiceImplTest {
     void addNegativeTest() {
         TagDTO inputTag = new TagDTO("#newtag12345");
         Tag tag = new Tag(1L, "#newtag1234");
-        TagDTO expectedTag = new TagDTO(1L, "#newtag123");
-        List<TagDTO> inputTags = Collections.singletonList(inputTag);
+        Tag expectedTag = new Tag(1L, "#newtag123233");
+        Set<TagDTO> inputTags = new HashSet<>();
+        Set<Tag> expectedTags = new HashSet<>();
+        inputTags.add(inputTag);
+        expectedTags.add(expectedTag);
         GiftCertificateDTO inputCertificate = new GiftCertificateDTO(
                 "newCertificate", "newDescription", BigDecimal.valueOf(5), 10, inputTags
         );
-        GiftCertificate certificate = new GiftCertificate(
+        GiftCertificate expected = new GiftCertificate(
                 1L, "newCertificate", "newDescription", BigDecimal.valueOf(5),
                 of(LocalDateTime.of(2020, Month.JANUARY, 10, 21, 0), ZoneId.systemDefault()),
                 of(LocalDateTime.of(2020, Month.JANUARY, 14, 22, 4), ZoneId.systemDefault()),
-                10
+                10, false, expectedTags
         );
-        GiftCertificateDTO expectedCertificate = giftCertificateMapper.toDto(certificate,
-                Collections.singletonList(expectedTag));
+        GiftCertificateDTO expectedCertificate = giftCertificateMapper.toDto(expected);
         List<Tag> tags = new ArrayList<>();
         tags.add(tag);
-        GiftCertificateTag giftCertificateTag = new GiftCertificateTag(1L, 1L);
-        Mockito.when(giftCertificateDAO.add(Mockito.any(GiftCertificate.class))).thenReturn(certificate);
-        Mockito.when(tagDAO.findByName(Mockito.any(SqlRequest.class))).thenReturn(tags);
-        Mockito.doNothing().when(giftCertificateTagDAO).add(Arrays.asList(giftCertificateTag, giftCertificateTag));
-        Mockito.when(tagDAO.findByCertificateId(1L)).thenReturn(tags);
+        Mockito.when(giftCertificateDAO.add(Mockito.any(GiftCertificate.class))).thenReturn(new GiftCertificate());
+        Mockito.when(tagDAO.findByName(Mockito.anyString())).thenReturn(tags);
         GiftCertificateDTO actualCertificate = giftCertificateService.add(inputCertificate);
         assertNotEquals(expectedCertificate, actualCertificate);
     }
@@ -120,61 +118,101 @@ class GiftCertificateServiceImplTest {
     @Test
     void addExceptionTest() {
         GiftCertificateDTO inputCertificate = new GiftCertificateDTO(
-                "newCertificate", "newDescription", BigDecimal.valueOf(-5), -55, new ArrayList<>()
+                "newCertificate", "newDescription", BigDecimal.valueOf(-5), -55, new HashSet<>()
         );
         assertThrows(GiftCertificateException.class, () -> giftCertificateService.add(inputCertificate));
     }
 
     @Test
-    void updatePositiveTest() {
+    void updatePatchPositiveTest() {
         GiftCertificatePatchDTO inputCertificate = new GiftCertificatePatchDTO(
-                "newCertificate111", "newDescription111", BigDecimal.valueOf(24), 16, new ArrayList<>()
+                "newCertificate111", "newDescription111", BigDecimal.valueOf(24), 16, new HashSet<>()
         );
         GiftCertificate certificate = new GiftCertificate(
                 1L, "newCertificate", "newDescription", BigDecimal.valueOf(5),
                 of(LocalDateTime.of(2020, Month.JANUARY, 10, 21, 0), ZoneId.systemDefault()),
                 of(LocalDateTime.of(2020, Month.JANUARY, 14, 22, 4), ZoneId.systemDefault()),
-                10
+                10, false, new HashSet<>()
         );
-        GiftCertificateDTO expectedCertificate = giftCertificateMapper.toDto(certificate, new ArrayList<>());
-        Mockito.when(giftCertificateDAO.update(Mockito.any(GiftCertificate.class))).thenReturn(Optional.of(certificate));
-        Mockito.when(tagDAO.findByName(Mockito.any(SqlRequest.class))).thenReturn(new ArrayList<>());
-        Mockito.doNothing().when(giftCertificateTagDAO).add(new ArrayList<>());
-        Mockito.when(tagDAO.findByCertificateId(1L)).thenReturn(new ArrayList<>());
+        GiftCertificateDTO expectedCertificate = giftCertificateMapper.toDto(certificate);
+        Mockito.when(giftCertificateDAO.findById(Mockito.anyLong())).thenReturn(certificate);
+        Mockito.when(giftCertificateDAO.update(Mockito.any(GiftCertificate.class))).thenReturn(certificate);
+        Mockito.when(tagDAO.findByName(Mockito.anyString())).thenReturn(new ArrayList<>());
         GiftCertificateDTO actualCertificate = giftCertificateService.update(1L, inputCertificate);
         assertEquals(expectedCertificate, actualCertificate);
     }
 
     @Test
-    void updateNegativeTest() {
+    void updatePatchNegativeTest() {
         GiftCertificatePatchDTO inputCertificate = new GiftCertificatePatchDTO(
-                "newCertificate111", "newDescription111", BigDecimal.valueOf(24), 16, new ArrayList<>()
+                "newCertificate111", "newDescription111", BigDecimal.valueOf(24), 16, new HashSet<>()
         );
         GiftCertificate certificate1 = new GiftCertificate(
                 1L, "newCertificate", "newDescription", BigDecimal.valueOf(5),
                 of(LocalDateTime.of(2020, Month.JANUARY, 10, 21, 0), ZoneId.systemDefault()),
                 of(LocalDateTime.of(2020, Month.JANUARY, 14, 22, 4), ZoneId.systemDefault()),
-                10
+                10, false, new HashSet<>()
         );
         GiftCertificate certificate2 = new GiftCertificate(
                 2L, "asdfasdf", "qwerqwer", BigDecimal.valueOf(6),
                 of(LocalDateTime.of(2020, Month.APRIL, 1, 14, 14), ZoneId.systemDefault()),
                 of(LocalDateTime.of(2020, Month.APRIL, 12, 15, 46), ZoneId.systemDefault()),
-                11
+                11, false, new HashSet<>()
         );
-        GiftCertificateDTO expectedCertificate = giftCertificateMapper.toDto(certificate1, new ArrayList<>());
-        Mockito.when(giftCertificateDAO.update(Mockito.any(GiftCertificate.class))).thenReturn(Optional.of(certificate2));
-        Mockito.when(tagDAO.findByName(Mockito.any(SqlRequest.class))).thenReturn(new ArrayList<>());
-        Mockito.doNothing().when(giftCertificateTagDAO).add(new ArrayList<>());
-        Mockito.when(tagDAO.findByCertificateId(Mockito.anyLong())).thenReturn(new ArrayList<>());
+        GiftCertificateDTO expectedCertificate = giftCertificateMapper.toDto(certificate1);
+        Mockito.when(giftCertificateDAO.findById(Mockito.anyLong())).thenReturn(certificate2);
+        Mockito.when(giftCertificateDAO.update(Mockito.any(GiftCertificate.class))).thenReturn(certificate2);
         GiftCertificateDTO actualCertificate = giftCertificateService.update(1L, inputCertificate);
         assertNotEquals(expectedCertificate, actualCertificate);
     }
 
     @Test
-    void updateExceptionTest() {
+    void updatePutPositiveTest() {
         GiftCertificateDTO inputCertificate = new GiftCertificateDTO(
-                null, "newDescription", BigDecimal.valueOf(-5), -55, new ArrayList<>()
+                "newasdfasdf", "newasdfasdfasdf", BigDecimal.valueOf(24), 16, new HashSet<>()
+        );
+        GiftCertificate certificate = new GiftCertificate(
+                2L, "newCertificate", "newDescription", BigDecimal.valueOf(5),
+                of(LocalDateTime.of(2021, Month.FEBRUARY, 11, 12, 0), ZoneId.systemDefault()),
+                of(LocalDateTime.of(2021, Month.FEBRUARY, 12, 11, 4), ZoneId.systemDefault()),
+                6, false, new HashSet<>()
+        );
+        GiftCertificateDTO expectedCertificate = giftCertificateMapper.toDto(certificate);
+        Mockito.when(giftCertificateDAO.findById(Mockito.anyLong())).thenReturn(certificate);
+        Mockito.when(giftCertificateDAO.update(Mockito.any(GiftCertificate.class))).thenReturn(certificate);
+        Mockito.when(tagDAO.findByName(Mockito.anyString())).thenReturn(new ArrayList<>());
+        GiftCertificateDTO actualCertificate = giftCertificateService.update(2L, inputCertificate);
+        assertEquals(expectedCertificate, actualCertificate);
+    }
+
+    @Test
+    void updatePutNegativeTest() {
+        GiftCertificateDTO inputCertificate = new GiftCertificateDTO(
+                "newCertificate", "newDescription", BigDecimal.valueOf(12), 6, new HashSet<>()
+        );
+        GiftCertificate certificate1 = new GiftCertificate(
+                3L, "zxcvzxcvzxcv", "zxcvzxvzxcv", BigDecimal.valueOf(7),
+                of(LocalDateTime.of(2020, Month.JANUARY, 10, 21, 0), ZoneId.systemDefault()),
+                of(LocalDateTime.of(2020, Month.JANUARY, 14, 22, 4), ZoneId.systemDefault()),
+                10, false, new HashSet<>()
+        );
+        GiftCertificate certificate2 = new GiftCertificate(
+                4L, "asdfasdf", "qwerqwer", BigDecimal.valueOf(6),
+                of(LocalDateTime.of(2021, Month.FEBRUARY, 2, 13, 14), ZoneId.systemDefault()),
+                of(LocalDateTime.of(2021, Month.FEBRUARY, 13, 14, 46), ZoneId.systemDefault()),
+                8, false, new HashSet<>()
+        );
+        GiftCertificateDTO expectedCertificate = giftCertificateMapper.toDto(certificate1);
+        Mockito.when(giftCertificateDAO.findById(Mockito.anyLong())).thenReturn(certificate2);
+        Mockito.when(giftCertificateDAO.update(Mockito.any(GiftCertificate.class))).thenReturn(certificate2);
+        GiftCertificateDTO actualCertificate = giftCertificateService.update(3L, inputCertificate);
+        assertNotEquals(expectedCertificate, actualCertificate);
+    }
+
+    @Test
+    void updatePutExceptionTest() {
+        GiftCertificateDTO inputCertificate = new GiftCertificateDTO(
+                null, "newDescription", BigDecimal.valueOf(-5), -55, new HashSet<>()
         );
         assertThrows(GiftCertificateException.class, () -> giftCertificateService.add(inputCertificate));
     }
@@ -182,7 +220,7 @@ class GiftCertificateServiceImplTest {
     @Test
     void removePositiveTest() {
         long inputId = 1;
-        Mockito.when(giftCertificateDAO.remove(Mockito.anyLong())).thenReturn(true);
+        Mockito.doNothing().when(giftCertificateDAO).remove(Mockito.anyLong());
         giftCertificateService.remove(inputId);
         Mockito.verify(giftCertificateDAO).remove(inputId);
     }
@@ -190,7 +228,7 @@ class GiftCertificateServiceImplTest {
     @Test
     void removeExceptionTest() {
         long inputId = 1;
-        Mockito.when(giftCertificateDAO.remove(Mockito.anyLong())).thenReturn(false);
+        Mockito.doThrow(GiftCertificateException.class).when(giftCertificateDAO).remove(Mockito.anyLong());
         assertThrows(GiftCertificateException.class, () -> giftCertificateService.remove(inputId));
     }
 
@@ -201,10 +239,10 @@ class GiftCertificateServiceImplTest {
                 1L, "newCertificate", "newDescription", BigDecimal.valueOf(5),
                 of(LocalDateTime.of(2020, Month.JANUARY, 10, 21, 0), ZoneId.systemDefault()),
                 of(LocalDateTime.of(2020, Month.JANUARY, 14, 22, 4), ZoneId.systemDefault()),
-                10
+                10, false, new HashSet<>()
         );
-        GiftCertificateDTO expectedCertificate = giftCertificateMapper.toDto(certificate, new ArrayList<>());
-        Mockito.when(giftCertificateDAO.findById(Mockito.anyLong())).thenReturn(Optional.of(certificate));
+        GiftCertificateDTO expectedCertificate = giftCertificateMapper.toDto(certificate);
+        Mockito.when(giftCertificateDAO.findById(Mockito.anyLong())).thenReturn(certificate);
         GiftCertificateDTO actualCertificate = giftCertificateService.findById(inputId);
         assertEquals(expectedCertificate, actualCertificate);
 
@@ -212,15 +250,21 @@ class GiftCertificateServiceImplTest {
 
     @Test
     void findByIdNegativeTest() {
-        long inputId = 1;
-        GiftCertificate certificate = new GiftCertificate(
+        long inputId = 2;
+        GiftCertificate certificate1 = new GiftCertificate(
                 1L, "newCertificate1234", "newDescription1234", BigDecimal.valueOf(5),
                 of(LocalDateTime.of(2020, Month.JANUARY, 10, 21, 0), ZoneId.systemDefault()),
                 of(LocalDateTime.of(2020, Month.JANUARY, 14, 22, 4), ZoneId.systemDefault()),
-                10
+                10, false, null
         );
-        GiftCertificateDTO expectedCertificate = giftCertificateMapper.toDto(certificate, null);
-        Mockito.when(giftCertificateDAO.findById(Mockito.anyLong())).thenReturn(Optional.of(certificate));
+        GiftCertificate certificate2 = new GiftCertificate(
+                2L, "newCertificate", "newDescription", BigDecimal.valueOf(7),
+                of(LocalDateTime.of(2020, Month.FEBRUARY, 11, 14, 0), ZoneId.systemDefault()),
+                of(LocalDateTime.of(2020, Month.FEBRUARY, 15, 15, 4), ZoneId.systemDefault()),
+                8, false, null
+        );
+        GiftCertificateDTO expectedCertificate = giftCertificateMapper.toDto(certificate1);
+        Mockito.when(giftCertificateDAO.findById(Mockito.anyLong())).thenReturn(certificate2);
         GiftCertificateDTO actualCertificate = giftCertificateService.findById(inputId);
         assertNotEquals(expectedCertificate, actualCertificate);
     }
@@ -228,7 +272,7 @@ class GiftCertificateServiceImplTest {
     @Test
     void findByIdExceptionTest() {
         long inputId = 1;
-        Mockito.when(giftCertificateDAO.findById(Mockito.anyLong())).thenReturn(Optional.empty());
+        Mockito.doThrow(GiftCertificateException.class).when(giftCertificateDAO).findById(Mockito.anyLong());
         assertThrows(GiftCertificateException.class, () -> giftCertificateService.findById(inputId));
     }
 
@@ -238,20 +282,21 @@ class GiftCertificateServiceImplTest {
                 1L, "newCertificate1234", "newDescription1234", BigDecimal.valueOf(5),
                 of(LocalDateTime.of(2020, Month.JANUARY, 10, 21, 0), ZoneId.systemDefault()),
                 of(LocalDateTime.of(2020, Month.JANUARY, 14, 22, 4), ZoneId.systemDefault()),
-                10
+                10, false, new HashSet<>()
         );
         GiftCertificate certificate2 = new GiftCertificate(
                 2L, "asdfasdfasdf", "asdfasdfasdf", BigDecimal.valueOf(7),
                 of(LocalDateTime.of(2020, Month.FEBRUARY, 11, 12, 0), ZoneId.systemDefault()),
                 of(LocalDateTime.of(2020, Month.MARCH, 12, 11, 41), ZoneId.systemDefault()),
-                11
+                11, false, new HashSet<>()
         );
         List<GiftCertificate> giftCertificates = Arrays.asList(certificate1, certificate2);
-        GiftCertificateDTO expectedCertificate1 = giftCertificateMapper.toDto(certificate1, new ArrayList<>());
-        GiftCertificateDTO expectedCertificate2 = giftCertificateMapper.toDto(certificate2, new ArrayList<>());
+        GiftCertificateDTO expectedCertificate1 = giftCertificateMapper.toDto(certificate1);
+        GiftCertificateDTO expectedCertificate2 = giftCertificateMapper.toDto(certificate2);
         List<GiftCertificateDTO> expectedGiftCertificates = Arrays.asList(expectedCertificate1, expectedCertificate2);
-        Mockito.when(giftCertificateDAO.findAll(Mockito.any())).thenReturn(giftCertificates);
-        List<GiftCertificateDTO> actualGiftCertificates = giftCertificateService.findAll(new LinkedCaseInsensitiveMap<>());
+        Mockito.when(giftCertificateDAO.findAll(Mockito.anyList(), Mockito.anyInt(), Mockito.anyInt()))
+                .thenReturn(giftCertificates);
+        List<GiftCertificateDTO> actualGiftCertificates = giftCertificateService.findAll(new HashMap<>());
         assertEquals(expectedGiftCertificates, actualGiftCertificates);
     }
 
@@ -261,26 +306,44 @@ class GiftCertificateServiceImplTest {
                 1L, "newCertificate34", "newDescription34", BigDecimal.valueOf(5),
                 of(LocalDateTime.of(2020, Month.JANUARY, 10, 21, 0), ZoneId.systemDefault()),
                 of(LocalDateTime.of(2020, Month.JANUARY, 14, 22, 4), ZoneId.systemDefault()),
-                10
+                10, false, new HashSet<>()
         );
         GiftCertificate certificate2 = new GiftCertificate(
                 2L, "zzzzzzzzz", "zzzzzzzzzzzzzzzzzzzzzzzz", BigDecimal.valueOf(7),
                 of(LocalDateTime.of(2020, Month.FEBRUARY, 11, 12, 0), ZoneId.systemDefault()),
                 of(LocalDateTime.of(2020, Month.MARCH, 12, 11, 41), ZoneId.systemDefault()),
-                11
+                11, false, new HashSet<>()
         );
         List<GiftCertificate> giftCertificates = Collections.singletonList(certificate1);
-        GiftCertificateDTO expectedCertificate1 = giftCertificateMapper.toDto(certificate1, new ArrayList<>());
-        GiftCertificateDTO expectedCertificate2 = giftCertificateMapper.toDto(certificate2, new ArrayList<>());
+        GiftCertificateDTO expectedCertificate1 = giftCertificateMapper.toDto(certificate1);
+        GiftCertificateDTO expectedCertificate2 = giftCertificateMapper.toDto(certificate2);
         List<GiftCertificateDTO> expectedGiftCertificates = Arrays.asList(expectedCertificate1, expectedCertificate2);
-        Mockito.when(giftCertificateDAO.findAll(Mockito.any())).thenReturn(giftCertificates);
+        Mockito.when(giftCertificateDAO.findAll(Mockito.anyList(), Mockito.anyInt(), Mockito.anyInt()))
+                .thenReturn(giftCertificates);
         List<GiftCertificateDTO> actualGiftCertificates = giftCertificateService.findAll(new HashMap<>());
         assertNotEquals(expectedGiftCertificates, actualGiftCertificates);
     }
 
     @Test
     void findAllExceptionTest() {
-        Mockito.when(giftCertificateDAO.findAll(Mockito.any())).thenReturn(new ArrayList<>());
+        Mockito.when(giftCertificateDAO.findAll(Mockito.anyList(), Mockito.anyInt(), Mockito.anyInt()))
+                .thenReturn(new ArrayList<>());
         assertThrows(GiftCertificateException.class, () -> giftCertificateService.findAll(new HashMap<>()));
+    }
+
+    @Test
+    void defineCountPositiveTest() {
+        long expected = 5L;
+        Mockito.when(giftCertificateDAO.defineCount(Mockito.anyList())).thenReturn(expected);
+        long actual = giftCertificateService.defineCount(new HashMap<>());
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    void defineCountNegativeTest() {
+        long expected = 5L;
+        Mockito.when(giftCertificateDAO.defineCount(Mockito.anyList())).thenReturn(0L);
+        long actual = giftCertificateService.defineCount(new HashMap<>());
+        assertNotEquals(expected, actual);
     }
 }

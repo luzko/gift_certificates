@@ -1,33 +1,45 @@
-version "1.0.0"
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+plugins {
+    id 'java-library'
+    id 'org.springframework.boot' version "${springBoot}"
+    id 'io.spring.dependency-management' version "${dependencyManagement}"
+}
 
 allprojects {
-    apply plugin: "java"
-    group "com.epam.esm"
-
-    sourceCompatibility = "1.8"
-    targetCompatibility = "1.8"
+    group = 'com.epam.esm'
+    version = '1.0.0'
+    sourceCompatibility = '1.8'
 
     repositories {
         mavenCentral()
     }
+}
+
+subprojects {
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'java-library'
+    apply plugin: 'java'
 
     dependencies {
-        implementation "org.springframework:spring-core:${springVersion}"
-        implementation "org.springframework:spring-context:${springVersion}"
-        implementation "org.springframework:spring-web:${springVersion}"
-        implementation "org.springframework:spring-webmvc:${springVersion}"
-        implementation "org.springframework:spring-jdbc:${springVersion}"
-        implementation "javax.validation:validation-api:${validationVersion}"
-        implementation "org.hibernate.validator:hibernate-validator:${hibernateVersion}"
-        implementation "org.glassfish:javax.el:${elVersion}"
-        testImplementation "org.springframework:spring-test:${springVersion}"
-        compileOnly "org.projectlombok:lombok:${lombokVersion}"
-        annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
-        testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
-        testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
+        implementation "org.springframework.boot:spring-boot-starter-web"
+        implementation "org.springframework.boot:spring-boot-starter-data-jpa"
+        implementation "org.springframework.boot:spring-boot-starter-hateoas"
+        compileOnly "org.projectlombok:lombok:${lombok}"
+        annotationProcessor "org.projectlombok:lombok:${lombok}"
+        testImplementation "org.springframework.boot:spring-boot-starter-test"
     }
 
     test {
         useJUnitPlatform()
     }
+}
+
+bootJar {
+    enabled = false
 }

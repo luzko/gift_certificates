@@ -7,14 +7,15 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 public class TagMapperImpl implements TagMapper {
-
     private final ModelMapper modelMapper;
 
     @Override
@@ -28,20 +29,16 @@ public class TagMapperImpl implements TagMapper {
     }
 
     @Override
-    public List<Tag> toEntity(List<TagDTO> tagDTOs) {
-        List<Tag> tags = new ArrayList<>();
-        for (TagDTO tagDTO : tagDTOs) {
-            tags.add(toEntity(tagDTO));
-        }
-        return tags;
+    public List<TagDTO> toDto(List<Tag> tags) {
+        return tags.stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<TagDTO> toDto(List<Tag> tags) {
-        List<TagDTO> tagDTOs = new ArrayList<>();
-        for (Tag tag : tags) {
-            tagDTOs.add(toDto(tag));
-        }
-        return tagDTOs;
+    public Set<TagDTO> toDto(Collection<Tag> tags) {
+        return tags.stream()
+                .map(this::toDto)
+                .collect(Collectors.toSet());
     }
 }

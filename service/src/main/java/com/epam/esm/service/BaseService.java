@@ -1,7 +1,8 @@
 package com.epam.esm.service;
 
 /**
- * The interface Base service. General interface, defines basic operations on objects.
+ * The interface Base service.
+ * General interface, defines basic operations on objects.
  *
  * @param <T> the entity type parameter
  */

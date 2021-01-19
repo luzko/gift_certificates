@@ -1,7 +1,8 @@
-apply plugin: "war"
-
 dependencies {
     implementation project(":persistence")
     implementation project(":service")
-    providedCompile "javax.servlet:javax.servlet-api:${servletVersion}"
+}
+
+bootJar {
+    enabled = true
 }

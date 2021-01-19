@@ -1,90 +1,137 @@
 package com.epam.esm.dao.impl;
 
+import com.epam.esm.constant.SQLQuery;
 import com.epam.esm.dao.GiftCertificateDAO;
 import com.epam.esm.exception.ExceptionType;
 import com.epam.esm.exception.GiftCertificateException;
 import com.epam.esm.model.GiftCertificate;
-import com.epam.esm.model.SqlRequest;
-import com.epam.esm.model.enums.SQLQuery;
-import com.epam.esm.utils.MapSqlParameterSourceCreator;
-import com.epam.esm.utils.rowmapper.GiftCertificateRowMapper;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.support.DataAccessUtils;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
+import com.epam.esm.specification.SearchSpecification;
+import com.epam.esm.specification.SortSpecification;
+import com.epam.esm.specification.Specification;
 import org.springframework.stereotype.Repository;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.PersistenceException;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * The type Gift certificate dao.
  */
 @Repository
-@RequiredArgsConstructor
 public class GiftCertificateDAOImpl implements GiftCertificateDAO {
-    private final MapSqlParameterSourceCreator parameterCreator;
-    private final GiftCertificateRowMapper rowMapper;
-    private final JdbcTemplate jdbcTemplate;
-    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-    @Qualifier("insertCertificate")
-    private final SimpleJdbcInsert insertCertificate;
+    /**
+     * The Entity manager.
+     */
+    @PersistenceContext
+    protected EntityManager entityManager;
 
     @Override
     public GiftCertificate add(GiftCertificate giftCertificate) {
-        MapSqlParameterSource mapSqlParameterSource = parameterCreator.create(giftCertificate);
         try {
-            Number newId = insertCertificate.executeAndReturnKey(mapSqlParameterSource);
-            giftCertificate.setId(newId.longValue());
-            return giftCertificate;
-        } catch (DataAccessException e) {
+            return merge(giftCertificate);
+        } catch (PersistenceException e) {
             throw new GiftCertificateException(ExceptionType.CERTIFICATE_NOT_ADDED);
         }
     }
 
     @Override
-    public Optional<GiftCertificate> update(GiftCertificate giftCertificate) {
-        MapSqlParameterSource mapSqlParameterSource = parameterCreator.create(giftCertificate);
+    public GiftCertificate update(GiftCertificate giftCertificate) {
         try {
-            if (namedParameterJdbcTemplate.update(SQLQuery.UPDATE_CERTIFICATE.getValue(), mapSqlParameterSource) == 0) {
-                throw new GiftCertificateException(ExceptionType.CERTIFICATE_NOT_UPDATED);
-            }
-            return findById(giftCertificate.getId());
-        } catch (DataAccessException e) {
+            return merge(giftCertificate);
+        } catch (PersistenceException e) {
             throw new GiftCertificateException(ExceptionType.CERTIFICATE_NOT_UPDATED);
         }
     }
 
     @Override
-    public boolean remove(long id) {
+    public void remove(long id) {
+        int count;
         try {
-            return jdbcTemplate.update(SQLQuery.REMOVE_CERTIFICATE_BY_ID.getValue(), id) != 0;
-        } catch (DataAccessException e) {
-            throw new GiftCertificateException(ExceptionType.CERTIFICATE_NOT_DELETED, String.valueOf(id));
+            count = entityManager.createQuery(SQLQuery.REMOVE_CERTIFICATE_BY_ID.getValue())
+                    .setParameter(1, id)
+                    .executeUpdate();
+        } catch (PersistenceException e) {
+            throw new GiftCertificateException(ExceptionType.CERTIFICATE_NOT_DELETED);
+        }
+        if (count == 0) {
+            throw new GiftCertificateException(ExceptionType.CERTIFICATES_NOT_FOUND, String.valueOf(id));
         }
     }
 
-    @Override
-    public Optional<GiftCertificate> findById(long id) {
+    public GiftCertificate findById(long id) {
         try {
-            List<GiftCertificate> giftCertificates = jdbcTemplate.query(SQLQuery.FIND_CERTIFICATE_BY_ID.getValue(),
-                    rowMapper, id);
-            return Optional.ofNullable(DataAccessUtils.singleResult(giftCertificates));
-        } catch (DataAccessException e) {
+            Object giftCertificate = entityManager.createQuery(SQLQuery.FIND_CERTIFICATE_BY_ID.getValue())
+                    .setParameter(1, id)
+                    .getSingleResult();
+            if (giftCertificate == null) {
+                throw new GiftCertificateException(ExceptionType.CERTIFICATE_NOT_FOUND, String.valueOf(id));
+            }
+            return (GiftCertificate) giftCertificate;
+        } catch (PersistenceException e) {
             throw new GiftCertificateException(ExceptionType.CERTIFICATE_NOT_FOUND, String.valueOf(id));
         }
     }
 
     @Override
-    public List<GiftCertificate> findAll(SqlRequest sqlRequest) {
+    @SuppressWarnings("unchecked")
+    public Map<Long, GiftCertificate> findById(String query) {
+        List<GiftCertificate> certificates;
         try {
-            return jdbcTemplate.query(sqlRequest.getSqlQuery(), rowMapper, sqlRequest.getRequestParameters());
-        } catch (DataAccessException e) {
+            certificates = entityManager.createQuery(query).getResultList();
+        } catch (PersistenceException e) {
             throw new GiftCertificateException(ExceptionType.CERTIFICATES_NOT_FOUND);
         }
+        return certificates.stream().collect(Collectors.toMap(GiftCertificate::getId, Function.identity()));
+    }
+
+    @Override
+    public List<GiftCertificate> findAll(List<Specification> specifications, int offset, int limit) {
+        try {
+            CriteriaQuery<GiftCertificate> criteriaQuery = buildCriteriaQuery(specifications);
+            return entityManager.createQuery(criteriaQuery)
+                    .setFirstResult(offset)
+                    .setMaxResults(limit)
+                    .getResultList();
+        } catch (PersistenceException e) {
+            throw new GiftCertificateException(ExceptionType.CERTIFICATES_NOT_FOUND);
+        }
+    }
+
+    @Override
+    public long defineCount(List<Specification> specifications) {
+        CriteriaQuery<GiftCertificate> criteriaQuery = buildCriteriaQuery(specifications);
+        return entityManager.createQuery(criteriaQuery).getResultStream().count();
+    }
+
+    private GiftCertificate merge(GiftCertificate giftCertificate) {
+        return entityManager.merge(giftCertificate);
+    }
+
+    private CriteriaQuery<GiftCertificate> buildCriteriaQuery(List<Specification> specifications) {
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<GiftCertificate> criteriaQuery = criteriaBuilder.createQuery(GiftCertificate.class);
+        Root<GiftCertificate> root = criteriaQuery.from(GiftCertificate.class);
+        List<Predicate> predicates = new ArrayList<>();
+        List<Order> orders = new ArrayList<>();
+        specifications.forEach(specification -> {
+            if (specification instanceof SearchSpecification) {
+                predicates.add(((SearchSpecification) specification).toPredicate(criteriaBuilder, root));
+            } else if (specification instanceof SortSpecification) {
+                orders.add(((SortSpecification) specification).toOrder(criteriaBuilder, root));
+            }
+        });
+        criteriaQuery.where(predicates.toArray(new Predicate[0]));
+        criteriaQuery.orderBy(orders.toArray(new Order[0]));
+        return criteriaQuery;
     }
 }

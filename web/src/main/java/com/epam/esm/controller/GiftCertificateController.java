@@ -3,9 +3,13 @@ package com.epam.esm.controller;
 import com.epam.esm.dto.GiftCertificateDTO;
 import com.epam.esm.dto.GiftCertificatePatchDTO;
 import com.epam.esm.service.GiftCertificateService;
+import com.epam.esm.util.builder.impl.GiftCertificateHateoasBuilder;
 import lombok.RequiredArgsConstructor;
+import org.springframework.hateoas.RepresentationModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedCaseInsensitiveMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -22,13 +26,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The type Gift certificate controller. The class used to manipulate CRUD operations on GiftCertificate data.
+ * The type Gift certificate controller.
+ * The class used to manipulate CRUD operations on GiftCertificate data.
  */
 @RestController
 @RequestMapping(value = "/v1/certificates", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class GiftCertificateController {
     private final GiftCertificateService giftCertificateService;
+    private final GiftCertificateHateoasBuilder giftCertificateHateoasBuilder;
 
     /**
      * Create a new GiftCertificate.
@@ -75,8 +81,9 @@ public class GiftCertificateController {
      */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void remove(@PathVariable("id") long id) {
+    public ResponseEntity<Void> remove(@PathVariable("id") long id) {
         giftCertificateService.remove(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**
@@ -87,17 +94,21 @@ public class GiftCertificateController {
      */
     @GetMapping("/{id}")
     public GiftCertificateDTO findById(@PathVariable("id") long id) {
-        return giftCertificateService.findById(id);
+        return giftCertificateHateoasBuilder.addLinks(giftCertificateService.findById(id));
     }
 
     /**
      * Find all certificates.
      *
-     * @param parameters the search parameters
-     * @return the list of GiftCertificateDTOs
+     * @param params the search parameters
+     * @return the list of GiftCertificateDTO
      */
     @GetMapping
-    public List<GiftCertificateDTO> findAll(@RequestParam Map<String, String> parameters) {
-        return giftCertificateService.findAll(parameters);
+    public RepresentationModel<GiftCertificateDTO> findAll(@RequestParam Map<String, String> params) {
+        Map<String, String> parameters = new LinkedCaseInsensitiveMap<>();
+        parameters.putAll(params);
+        List<GiftCertificateDTO> certificates = giftCertificateService.findAll(parameters);
+        long count = giftCertificateService.defineCount(parameters);
+        return giftCertificateHateoasBuilder.addLinks(certificates, parameters, count);
     }
 }
