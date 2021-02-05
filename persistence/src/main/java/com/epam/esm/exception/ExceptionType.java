@@ -10,9 +10,10 @@ import java.util.Optional;
 @Getter
 @AllArgsConstructor
 public enum ExceptionType {
-    //tag persistence
+    //tag
     TAG_NOT_ADDED("400001"),
     TAG_NOT_DELETED("400002"),
+    TAG_ALREADY_EXIST("400004"),
     TAG_NOT_FOUND("404001", HttpStatus.NOT_FOUND),
     TAGS_NOT_FOUND("404002", HttpStatus.NOT_FOUND),
 
@@ -38,7 +39,37 @@ public enum ExceptionType {
     CERTIFICATE_PRICE_EXCEED("400112"),
     CERTIFICATE_DURATION_EMPTY("400113"),
     CERTIFICATE_DURATION_NEGATIVE("400114"),
-    CERTIFICATE_DURATION_EXCEED("400115");
+    CERTIFICATE_DURATION_EXCEED("400115"),
+    CERTIFICATE_ID_EMPTY("400116"),
+    CERTIFICATE_ID_NEGATIVE("400117"),
+    CERTIFICATE_COUNT_EMPTY("400118"),
+    CERTIFICATE_COUNT_NEGATIVE("400119"),
+    CERTIFICATE_COUNT_EXCEED("400120"),
+    CERTIFICATE_DUPLICATION("400121"),
+
+    //user
+    USER_NOT_FOUND("404201", HttpStatus.NOT_FOUND),
+    USERS_NOT_FOUND("404202", HttpStatus.NOT_FOUND),
+
+    //user validation
+    USER_ID_INVALID("400201"),
+    USER_ID_NEGATIVE("400202"),
+
+    //order
+    ORDER_NOT_ADDED("400301"),
+    ORDER_NOT_DELETED("400302"),
+    ORDER_NOT_FOUND("404301", HttpStatus.NOT_FOUND),
+    ORDERS_NOT_FOUND("404302", HttpStatus.NOT_FOUND),
+
+    //order validation
+    ORDER_USER_ID_EMPTY("400303"),
+    ORDER_USER_ID_NEGATIVE("400304"),
+
+    //pagination
+    PAGE_VALUE_NEGATIVE("400901"),
+    PAGE_VALUE_INVALID("400902"),
+    LIMIT_VALUE_EXCEED("400903"),
+    LIMIT_VALUE_INVALID("400904");
 
     private final String errorCode;
     private final HttpStatus httpStatus;

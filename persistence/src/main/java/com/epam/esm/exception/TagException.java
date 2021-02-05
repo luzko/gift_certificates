@@ -25,4 +25,3 @@ public class TagException extends ApplicationException {
         super(exceptionType, parameter);
     }
 }
-

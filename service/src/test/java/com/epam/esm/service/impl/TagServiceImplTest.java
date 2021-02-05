@@ -6,6 +6,7 @@ import com.epam.esm.exception.TagException;
 import com.epam.esm.mapper.TagMapper;
 import com.epam.esm.mapper.impl.TagMapperImpl;
 import com.epam.esm.model.Tag;
+import com.epam.esm.utils.PaginationUtil;
 import com.epam.esm.validation.AppValidator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,8 +21,8 @@ import javax.validation.Validation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -33,6 +34,8 @@ class TagServiceImplTest {
     private final TagMapper tagMapper = new TagMapperImpl(new ModelMapper());
     @Spy
     private final AppValidator validator = new AppValidator(Validation.buildDefaultValidatorFactory().getValidator());
+    @Spy
+    private final PaginationUtil paginationUtil = new PaginationUtil();
     @InjectMocks
     private TagServiceImpl tagService;
     @Mock
@@ -67,7 +70,7 @@ class TagServiceImplTest {
     @Test
     void removePositiveTest() {
         long inputId = 1;
-        Mockito.when(tagDAO.remove(Mockito.anyLong())).thenReturn(true);
+        Mockito.doNothing().when(tagDAO).remove(Mockito.anyLong());
         tagService.remove(inputId);
         Mockito.verify(tagDAO).remove(inputId);
     }
@@ -75,7 +78,7 @@ class TagServiceImplTest {
     @Test
     void removeExceptionTest() {
         long inputId = 1;
-        Mockito.when(tagDAO.remove(Mockito.anyLong())).thenReturn(false);
+        Mockito.doThrow(TagException.class).when(tagDAO).remove(Mockito.anyLong());
         assertThrows(TagException.class, () -> tagService.remove(inputId));
     }
 
@@ -84,7 +87,7 @@ class TagServiceImplTest {
         long inputId = 1;
         TagDTO expectedTag = new TagDTO(1L, "#newtag24");
         Tag tag = new Tag(1L, "#newtag24");
-        Mockito.when(tagDAO.findById(Mockito.anyLong())).thenReturn(Optional.of(tag));
+        Mockito.when(tagDAO.findById(Mockito.anyLong())).thenReturn(tag);
         TagDTO actualTag = tagService.findById(inputId);
         assertEquals(expectedTag, actualTag);
     }
@@ -94,7 +97,7 @@ class TagServiceImplTest {
         long inputId = 1;
         TagDTO expectedTag = new TagDTO(1L, "#olololo");
         Tag tag = new Tag(2L, "#newtag");
-        Mockito.when(tagDAO.findById(Mockito.anyLong())).thenReturn(Optional.of(tag));
+        Mockito.when(tagDAO.findById(Mockito.anyLong())).thenReturn(tag);
         TagDTO actualTag = tagService.findById(inputId);
         assertNotEquals(expectedTag, actualTag);
     }
@@ -102,8 +105,26 @@ class TagServiceImplTest {
     @Test
     void findByIdExceptionTest() {
         long inputId = 1;
-        Mockito.when(tagDAO.findById(Mockito.anyLong())).thenReturn(Optional.empty());
+        Mockito.doThrow(TagException.class).when(tagDAO).findById(Mockito.anyLong());
         assertThrows(TagException.class, () -> tagService.findById(inputId));
+    }
+
+    @Test
+    void findMostPopularPositiveTest() {
+        TagDTO expectedTag = new TagDTO(1L, "#most");
+        Tag tag = new Tag(1L, "#most");
+        Mockito.when(tagDAO.findMostPopular()).thenReturn(tag);
+        TagDTO actualTag = tagService.findMostPopular();
+        assertEquals(expectedTag, actualTag);
+    }
+
+    @Test
+    void findMostPopularNegativeTest() {
+        TagDTO expectedTag = new TagDTO(1L, "#new");
+        Tag tag = new Tag(2L, "#old");
+        Mockito.when(tagDAO.findMostPopular()).thenReturn(tag);
+        TagDTO actualTag = tagService.findMostPopular();
+        assertNotEquals(expectedTag, actualTag);
     }
 
     @Test
@@ -114,8 +135,8 @@ class TagServiceImplTest {
         Tag tag1 = new Tag(1L, "#olololo");
         Tag tag2 = new Tag(2L, "#newtag24");
         List<Tag> tags = Arrays.asList(tag1, tag2);
-        Mockito.when(tagDAO.findAll()).thenReturn(tags);
-        List<TagDTO> actualTags = tagService.findAll();
+        Mockito.when(tagDAO.findAll(Mockito.anyInt(), Mockito.anyInt())).thenReturn(tags);
+        List<TagDTO> actualTags = tagService.findAll(new HashMap<>());
         assertEquals(expectedTags, actualTags);
     }
 
@@ -126,14 +147,30 @@ class TagServiceImplTest {
         Tag tag1 = new Tag(1L, "#olololo");
         Tag tag2 = new Tag(2L, "#newtag24");
         List<Tag> tags = Arrays.asList(tag1, tag2);
-        Mockito.when(tagDAO.findAll()).thenReturn(tags);
-        List<TagDTO> actualTags = tagService.findAll();
+        Mockito.when(tagDAO.findAll(Mockito.anyInt(), Mockito.anyInt())).thenReturn(tags);
+        List<TagDTO> actualTags = tagService.findAll(new HashMap<>());
         assertNotEquals(expectedTags, actualTags);
     }
 
     @Test
     void findAllExceptionTest() {
-        Mockito.when(tagDAO.findAll()).thenReturn(new ArrayList<>());
-        assertThrows(TagException.class, () -> tagService.findAll());
+        Mockito.when(tagDAO.findAll(Mockito.anyInt(), Mockito.anyInt())).thenReturn(new ArrayList<>());
+        assertThrows(TagException.class, () -> tagService.findAll(new HashMap<>()));
+    }
+
+    @Test
+    void defineCountPositiveTest() {
+        long expected = 5L;
+        Mockito.when(tagDAO.defineCount()).thenReturn(expected);
+        long actual = tagService.defineCount();
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    void defineCountNegativeTest() {
+        long expected = 5L;
+        Mockito.when(tagDAO.defineCount()).thenReturn(0L);
+        long actual = tagService.defineCount();
+        assertNotEquals(expected, actual);
     }
 }

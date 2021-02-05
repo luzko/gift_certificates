@@ -6,7 +6,10 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.ser.ZonedDateTimeSerializer;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.server.core.Relation;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.NotBlank;
@@ -15,12 +18,14 @@ import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
-import java.util.List;
+import java.util.Set;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class GiftCertificateDTO {
+@Relation(collectionRelation = "certificates")
+public class GiftCertificateDTO extends RepresentationModel<GiftCertificateDTO> {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Long id;
     @NotBlank(message = "400106")
@@ -45,9 +50,9 @@ public class GiftCertificateDTO {
     @Positive(message = "400114")
     @Max(value = 1000, message = "400115")
     private Integer duration;
-    private List<TagDTO> tags;
+    private Set<TagDTO> tags;
 
-    public GiftCertificateDTO(String name, String description, BigDecimal price, int duration, List<TagDTO> tags) {
+    public GiftCertificateDTO(String name, String description, BigDecimal price, int duration, Set<TagDTO> tags) {
         this.name = name;
         this.description = description;
         this.price = price;

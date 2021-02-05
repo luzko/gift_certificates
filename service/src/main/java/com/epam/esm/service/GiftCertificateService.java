@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The interface Gift certificate service. The interface defines certain operations on certificates.
+ * The interface Gift certificate service.
+ * The interface defines certain operations on certificates.
  */
 public interface GiftCertificateService extends BaseService<GiftCertificateDTO> {
     /**
@@ -32,7 +33,15 @@ public interface GiftCertificateService extends BaseService<GiftCertificateDTO> 
      * Find all certificates.
      *
      * @param parameters the search parameters
-     * @return the list of GiftCertificateDTOs
+     * @return the list of GiftCertificateDTO
      */
     List<GiftCertificateDTO> findAll(Map<String, String> parameters);
+
+    /**
+     * Define count certificates from DB.
+     *
+     * @param parameters the search parameters
+     * @return the count certificates from DB
+     */
+    long defineCount(Map<String, String> parameters);
 }
