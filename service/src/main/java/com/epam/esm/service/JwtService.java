@@ -13,4 +13,6 @@ public interface JwtService {
     String resolveToken(HttpServletRequest request);
 
     boolean validateToken(String token);
+
+    long getValidity();
 }

@@ -1,5 +1,6 @@
 package com.epam.esm.controller;
 
+import com.epam.esm.dto.TokenDTO;
 import com.epam.esm.dto.UserDTO;
 import com.epam.esm.service.UserService;
 import com.epam.esm.util.builder.impl.UserHateoasBuilder;
@@ -9,6 +10,8 @@ import org.springframework.http.MediaType;
 import org.springframework.util.LinkedCaseInsensitiveMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,6 +30,16 @@ public class UserController {
     private final UserService userService;
     private final UserHateoasBuilder userHateoasBuilder;
 
+    @PostMapping("/login")
+    //@PreAuthorize("permitAll()")
+    public TokenDTO login(@RequestBody UserDTO userDTO) {
+        System.out.println("----------");
+        System.out.println("controller");
+        return userService.login(userDTO);
+    }
+
+    //TODO register
+
     /**
      * Find a UserDTO by id.
      *
@@ -35,6 +48,7 @@ public class UserController {
      */
     @GetMapping("/{id}")
     public UserDTO findById(@PathVariable("id") long id) {
+        System.out.println("findById");
         return userHateoasBuilder.addLinks(userService.findById(id));
     }
 

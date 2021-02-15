@@ -20,5 +20,6 @@ public class UserDTO extends RepresentationModel<UserDTO> {
     private String email;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Role role;
 }

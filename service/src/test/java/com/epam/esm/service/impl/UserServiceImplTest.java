@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
-    @Spy
+    /*@Spy
     private final UserMapper userMapper = new UserMapperImpl(new ModelMapper());
     @Spy
     private final PaginationUtil paginationUtil = new PaginationUtil();
@@ -110,5 +110,5 @@ class UserServiceImplTest {
         Mockito.when(userDAO.defineCount()).thenReturn(0L);
         long actual = userService.defineCount();
         assertNotEquals(expected, actual);
-    }
+    }*/
 }

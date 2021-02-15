@@ -1,34 +1,38 @@
 package com.epam.esm.service.impl;
 
 import com.epam.esm.constant.JwtParam;
+import com.epam.esm.dao.UserDAO;
 import com.epam.esm.dto.UserDTO;
 import com.epam.esm.mapper.JwtUserMapper;
+import com.epam.esm.mapper.UserMapper;
 import com.epam.esm.model.JwtUser;
 import com.epam.esm.service.JwtService;
-import com.epam.esm.service.UserService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Base64;
 import java.util.Date;
 
-@Component
+@Service
 @RequiredArgsConstructor
 public class JwtServiceImpl implements JwtService {
-    private final UserService userService;
+    private final UserDAO userDAO;
+    private final UserMapper userMapper;
     private final JwtUserMapper jwtUserMapper;
     @Value("${jwt.token.secret}")
     private String secret;
+    @Getter
     @Value("${jwt.token.expired}")
     private long validity;
 
@@ -50,7 +54,8 @@ public class JwtServiceImpl implements JwtService {
     }
 
     public Authentication getAuthentication(String token) {
-        JwtUser jwtUser = jwtUserMapper.toJwtUser(userService.findByEmail(getUsername(token)));
+        UserDTO userDTO = userMapper.toDto(userDAO.findByEmail(getUsername(token)));
+        JwtUser jwtUser = jwtUserMapper.toJwtUser(userDTO);
         return new UsernamePasswordAuthenticationToken(jwtUser, jwtUser.getPassword(), jwtUser.getAuthorities());
     }
 
