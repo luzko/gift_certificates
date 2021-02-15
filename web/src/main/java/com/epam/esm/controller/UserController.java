@@ -34,7 +34,7 @@ public class UserController {
     @PostMapping("/login")
     //@PreAuthorize("permitAll()")
     public TokenDTO login(@RequestBody UserDTO userDTO) {
-        System.out.println("----------");
+        System.out.println("-----");
         System.out.println("controller");
         return userService.login(userDTO);
     }
