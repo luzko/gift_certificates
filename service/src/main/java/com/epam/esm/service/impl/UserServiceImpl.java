@@ -32,6 +32,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserDTO findByEmail(String email) {
+        return userMapper.toDto(userDAO.findByEmail(email));
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<UserDTO> findAll(Map<String, String> parameters) {
         int limit = paginationUtil.defineLimit(parameters.get(LinkParam.LIMIT.getValue()));

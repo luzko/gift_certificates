@@ -13,9 +13,17 @@ public interface UserDAO {
      * Find by id.
      *
      * @param id the user id to search in DB
-     * @return the Order entity
+     * @return the User entity
      */
     User findById(long id);
+
+    /**
+     * Find user by email.
+     *
+     * @param email the email to search in DB
+     * @return the User entity
+     */
+    User findByEmail(String email);
 
     /**
      * Find all users.

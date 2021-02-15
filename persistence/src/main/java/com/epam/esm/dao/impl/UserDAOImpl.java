@@ -33,6 +33,21 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
+    public User findByEmail(String email) {
+        try {
+            Object user = entityManager.createQuery(SQLQuery.FIND_BY_EMAIL.getValue())
+                    .setParameter(1, email)
+                    .getSingleResult();
+            if (user == null) {
+                throw new UserException(ExceptionType.USER_NOT_FOUND);
+            }
+            return (User) user;
+        } catch (PersistenceException e) {
+            throw new UserException(ExceptionType.USER_NOT_FOUND);
+        }
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public List<User> findAll(int offset, int limit) {
         try {

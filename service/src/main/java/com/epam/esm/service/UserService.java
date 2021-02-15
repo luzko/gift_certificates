@@ -19,6 +19,14 @@ public interface UserService {
     UserDTO findById(long id);
 
     /**
+     * Find user by email.
+     *
+     * @param email the email to find the user
+     * @return the usersDTO
+     */
+    UserDTO findByEmail(String email);
+
+    /**
      * Find all users.
      *
      * @param parameters the parameters

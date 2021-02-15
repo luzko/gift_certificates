@@ -34,6 +34,7 @@ public enum SQLQuery {
     REMOVE_CERTIFICATE_BY_ID("UPDATE GiftCertificate gc SET gc.isDeleted = TRUE WHERE gc.id =?1"),
 
     //user
+    FIND_BY_EMAIL("SELECT u FROM User u WHERE u.email LIKE ?1"),
     FIND_ALL_USERS("SELECT u FROM User u"),
     FIND_COUNT_USERS("SELECT count(u) FROM User u"),
 
