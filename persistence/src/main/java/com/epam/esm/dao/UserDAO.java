@@ -10,6 +10,14 @@ import java.util.List;
  */
 public interface UserDAO {
     /**
+     * Create user in DB.
+     *
+     * @param user the user to create in the DB
+     * @return the created user
+     */
+    User add(User user);
+
+    /**
      * Find by id.
      *
      * @param id the user id to search in DB

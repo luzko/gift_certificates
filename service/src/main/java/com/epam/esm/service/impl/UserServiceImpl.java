@@ -12,6 +12,7 @@ import com.epam.esm.mapper.UserMapper;
 import com.epam.esm.service.JwtService;
 import com.epam.esm.service.UserService;
 import com.epam.esm.utils.PaginationUtil;
+import com.epam.esm.validation.AppValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -33,6 +34,7 @@ public class UserServiceImpl implements UserService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UserDAO userDAO;
+    private final AppValidator validator;
     private final PaginationUtil paginationUtil;
 
     @Override
@@ -44,8 +46,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public TokenDTO register(UserDTO userDTO) {
-        return null;
+    @Transactional
+    public UserDTO add(UserDTO userDTO) {
+        validator.validate(userDTO);
+        return userMapper.toDto(userDAO.add(userMapper.toEntity(userDTO)));
     }
 
     @Override

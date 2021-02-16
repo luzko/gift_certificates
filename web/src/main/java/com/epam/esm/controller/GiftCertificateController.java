@@ -9,6 +9,7 @@ import org.springframework.hateoas.RepresentationModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.LinkedCaseInsensitiveMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,6 +45,7 @@ public class GiftCertificateController {
      */
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('ADMIN')")
     public GiftCertificateDTO add(@RequestBody GiftCertificateDTO giftCertificateDTO) {
         return giftCertificateService.add(giftCertificateDTO);
     }
@@ -57,6 +59,7 @@ public class GiftCertificateController {
      */
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('ADMIN')")
     public GiftCertificateDTO update(@PathVariable long id, @RequestBody GiftCertificateDTO giftCertificateDTO) {
         return giftCertificateService.update(id, giftCertificateDTO);
     }
@@ -70,6 +73,7 @@ public class GiftCertificateController {
      */
     @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("hasAuthority('ADMIN')")
     public GiftCertificateDTO update(@PathVariable long id, @RequestBody GiftCertificatePatchDTO giftCertificatePatchDTO) {
         return giftCertificateService.update(id, giftCertificatePatchDTO);
     }
@@ -81,6 +85,7 @@ public class GiftCertificateController {
      */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Void> remove(@PathVariable("id") long id) {
         giftCertificateService.remove(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

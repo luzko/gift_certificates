@@ -24,6 +24,17 @@ public class UserDAOImpl implements UserDAO {
     protected EntityManager entityManager;
 
     @Override
+    public User add(User user) {
+        try {
+            entityManager.persist(user);
+        } catch (PersistenceException e) {
+            //TODO
+            throw new UserException();
+        }
+        return user;
+    }
+
+    @Override
     public User findById(long id) {
         User user = entityManager.find(User.class, id);
         if (user == null) {

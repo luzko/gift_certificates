@@ -8,6 +8,7 @@ import org.springframework.hateoas.RepresentationModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.LinkedCaseInsensitiveMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,6 +42,7 @@ public class OrderController {
      */
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('USER')")
     public OrderDTO add(@RequestBody OrderDTO orderDTO) {
         return orderService.add(orderDTO);
     }
@@ -52,6 +54,7 @@ public class OrderController {
      */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<Void> remove(@PathVariable("id") long id) {
         orderService.remove(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -64,6 +67,7 @@ public class OrderController {
      * @return the OrderDTO with the requested id
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMINISTRATOR', 'USER')")
     public OrderDTO findById(@PathVariable("id") long id) {
         return orderHateoasBuilder.addLinks(orderService.findById(id));
     }
@@ -75,6 +79,7 @@ public class OrderController {
      * @return the list of OrderDTO
      */
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ADMINISTRATOR', 'USER')")
     public RepresentationModel<OrderDTO> findAll(@RequestParam Map<String, String> params) {
         Map<String, String> parameters = new LinkedCaseInsensitiveMap<>();
         parameters.putAll(params);

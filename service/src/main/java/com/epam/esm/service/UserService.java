@@ -13,9 +13,21 @@ import java.util.Map;
  * The interface defines certain operations on users.
  */
 public interface UserService extends UserDetailsService {
+    /**
+     * Login user in system.
+     *
+     * @param authenticationDTO the authenticationDTO with information to login
+     * @return the token
+     */
     TokenDTO login(AuthenticationDTO authenticationDTO);
 
-    TokenDTO register(UserDTO userDTO);
+    /**
+     * Create a new User.
+     *
+     * @param userDTO the userDTO with information to create
+     * @return the created user
+     */
+    UserDTO add(UserDTO userDTO);
 
     /**
      * Find user by id.

@@ -17,6 +17,11 @@ public class UserMapperImpl implements UserMapper {
     private final ModelMapper modelMapper;
 
     @Override
+    public User toEntity(UserDTO userDTO) {
+        return Objects.isNull(userDTO) ? null : modelMapper.map(userDTO, User.class);
+    }
+
+    @Override
     public UserDTO toDto(User user) {
         return Objects.isNull(user) ? null : modelMapper.map(user, UserDTO.class);
     }

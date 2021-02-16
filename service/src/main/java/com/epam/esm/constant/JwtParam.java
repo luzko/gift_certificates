@@ -7,8 +7,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum JwtParam {
     ROLE("role"),
-    AUTHORIZATION("Authorization"),
-    BEARER("Bearer_");
+    AUTHORIZATION("Authorization");
 
     private final String value;
 }

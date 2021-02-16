@@ -9,6 +9,10 @@ import lombok.NoArgsConstructor;
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;
 
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
@@ -17,7 +21,10 @@ import org.springframework.hateoas.server.core.Relation;
 public class UserDTO extends RepresentationModel<UserDTO> {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Long id;
+    @NotNull
+    @Email
     private String email;
+    @NotBlank
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)

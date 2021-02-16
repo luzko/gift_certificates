@@ -5,10 +5,12 @@ import com.epam.esm.dto.GiftCertificateOrderDTO;
 import com.epam.esm.dto.GiftCertificatePatchDTO;
 import com.epam.esm.dto.OrderDTO;
 import com.epam.esm.dto.TagDTO;
+import com.epam.esm.dto.UserDTO;
 import com.epam.esm.exception.ExceptionType;
 import com.epam.esm.exception.GiftCertificateException;
 import com.epam.esm.exception.OrderException;
 import com.epam.esm.exception.TagException;
+import com.epam.esm.exception.UserException;
 import com.epam.esm.model.GiftCertificate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -51,6 +53,13 @@ public class AppValidator {
         Set<ConstraintViolation<TagDTO>> violations = validator.validate(tagDTO);
         violations.forEach(violation -> ExceptionType.defineTypeByCode(violation.getMessage()).ifPresent(exceptionType -> {
             throw new TagException(exceptionType);
+        }));
+    }
+
+    public void validate(UserDTO userDTO) {
+        Set<ConstraintViolation<UserDTO>> violations = validator.validate(userDTO);
+        violations.forEach(violation -> ExceptionType.defineTypeByCode(violation.getMessage()).ifPresent(exceptionType -> {
+            throw new UserException(exceptionType);
         }));
     }
 

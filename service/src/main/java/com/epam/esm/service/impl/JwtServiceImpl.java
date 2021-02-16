@@ -15,10 +15,8 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -62,12 +60,7 @@ public class JwtServiceImpl implements JwtService {
     }
 
     public String resolveToken(HttpServletRequest request) {
-        String bearerToken = request.getHeader(JwtParam.AUTHORIZATION.getValue());
-        String token = null;
-        if (bearerToken != null && bearerToken.startsWith(JwtParam.BEARER.getValue())) {
-            token = bearerToken.substring(7);
-        }
-        return token;
+        return request.getHeader(JwtParam.AUTHORIZATION.getValue());
     }
 
     public boolean validateToken(String token) {
