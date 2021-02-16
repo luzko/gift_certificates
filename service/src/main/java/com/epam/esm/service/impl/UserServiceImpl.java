@@ -2,6 +2,7 @@ package com.epam.esm.service.impl;
 
 import com.epam.esm.constant.LinkParam;
 import com.epam.esm.dao.UserDAO;
+import com.epam.esm.dto.AuthenticationDTO;
 import com.epam.esm.dto.TokenDTO;
 import com.epam.esm.dto.UserDTO;
 import com.epam.esm.exception.ExceptionType;
@@ -35,10 +36,9 @@ public class UserServiceImpl implements UserService {
     private final PaginationUtil paginationUtil;
 
     @Override
-    public TokenDTO login(UserDTO userDTO) {
-        System.out.println("service");
-        String username = userDTO.getEmail();
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, userDTO.getPassword()));
+    public TokenDTO login(AuthenticationDTO authenticationDTO) {
+        String username = authenticationDTO.getUsername();
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, authenticationDTO.getPassword()));
         String token = jwtService.createToken(findByEmail(username));
         return new TokenDTO(username, token, jwtService.getValidity());
     }

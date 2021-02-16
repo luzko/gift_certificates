@@ -1,5 +1,6 @@
 package com.epam.esm.service;
 
+import com.epam.esm.dto.AuthenticationDTO;
 import com.epam.esm.dto.TokenDTO;
 import com.epam.esm.dto.UserDTO;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -12,7 +13,7 @@ import java.util.Map;
  * The interface defines certain operations on users.
  */
 public interface UserService extends UserDetailsService {
-    TokenDTO login(UserDTO userDTO);
+    TokenDTO login(AuthenticationDTO authenticationDTO);
 
     TokenDTO register(UserDTO userDTO);
 

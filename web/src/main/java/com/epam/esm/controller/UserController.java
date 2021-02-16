@@ -1,7 +1,9 @@
 package com.epam.esm.controller;
 
+import com.epam.esm.dto.AuthenticationDTO;
 import com.epam.esm.dto.TokenDTO;
 import com.epam.esm.dto.UserDTO;
+import com.epam.esm.model.Role;
 import com.epam.esm.service.UserService;
 import com.epam.esm.util.builder.impl.UserHateoasBuilder;
 import lombok.RequiredArgsConstructor;
@@ -32,12 +34,10 @@ public class UserController {
     private final UserHateoasBuilder userHateoasBuilder;
 
     @PostMapping("/login")
-    //@PreAuthorize("permitAll()")
-    public TokenDTO login(@RequestBody UserDTO userDTO) {
-        System.out.println("-----");
-        System.out.println("controller");
-        return userService.login(userDTO);
+    public TokenDTO userLogin(@RequestBody AuthenticationDTO authenticationDTO) {
+        return userService.login(authenticationDTO);
     }
+
 
     //TODO register
 
@@ -48,9 +48,11 @@ public class UserController {
      * @return the UserDTO with the requested id
      */
     @GetMapping("/{id}")
-    public UserDTO findById(@PathVariable("id") long id) {
-        System.out.println("findById");
-        return userHateoasBuilder.addLinks(userService.findById(id));
+    public TokenDTO findById(@PathVariable("id") long id) {
+        AuthenticationDTO authenticationDTO = new AuthenticationDTO();
+        authenticationDTO.setUsername("test@test.test");
+        authenticationDTO.setPassword("aaa");
+        return userService.login(authenticationDTO);
     }
 
     /**
